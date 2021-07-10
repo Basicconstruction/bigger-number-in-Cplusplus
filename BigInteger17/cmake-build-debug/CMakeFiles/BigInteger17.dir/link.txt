@@ -1,0 +1,3 @@
+"D:\Program Files\x64\CLion 2020.3.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\BigInteger17.dir/objects.a
+D:\ProgramData\MingW\bin\ar.exe cr CMakeFiles\BigInteger17.dir/objects.a @CMakeFiles\BigInteger17.dir\objects1.rsp
+D:\ProgramData\MingW\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\BigInteger17.dir/objects.a -Wl,--no-whole-archive -o BigInteger17.exe -Wl,--out-implib,libBigInteger17.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\BigInteger17.dir\linklibs.rsp
