@@ -7,11 +7,11 @@
 #include <cmath>
 using namespace std;
 using namespace std::string_literals;
-long long int convertStringToLong(string s){
+long long int convertStringToLong(string s) {
     long long int x = 0;
-    for(int i=0; i<s.length();i++){
+    for (int i = 0; i < s.length(); i++) {
         x *= 10;
-        x += static_cast<int>(s[i]-48);
+        x += static_cast<int>(s[i] - 48);
     }
     return x;
 }
@@ -21,7 +21,6 @@ string convertNumToString(T x) {
     if (x == 0) {
         return "0";
     }
-    x = abs(x);
     string s;
     x *= 10;
     while (x >= 10) {
@@ -597,51 +596,52 @@ public:
     string getValue() {
         return over0 ? this->v : '-' + this->v;
     }
-    BigInteger singleMul(const unsigned int b){
+    BigInteger singleMul(const unsigned int b) {
         string c;
         string b1 = this->value;
         size_t le = b1.length();
         int push = 0;
         int multi;
-        for(size_t h = 0;h<le;h++){
-            multi = convertCharToInt(b1[le-h-1]) * b+push;
-            c = convertIntToChar(multi%10)+c;
+        for (size_t h = 0; h < le; h++) {
+            multi = convertCharToInt(b1[le - h - 1]) * b + push;
+            c = convertIntToChar(multi % 10) + c;
             push = multi / 10 % 10;
         }
-        c = convertIntToChar(push)+c;
+        c = convertIntToChar(push) + c;
         return BigInteger(c);
     }
-    BigInteger mul(const BigInteger& b2){
+    BigInteger mul(const BigInteger& b2) {
         BigInteger c(0);
         BigInteger c2(*this);
         const string b3 = b2.value;
-        for(size_t h = 0;h<b2.value.length();++h){
-            c = c + (c2<<(convertNumToString(h))).singleMul(convertCharToInt(b3[b2.value.length()-h-1]));
+        for (size_t h = 0; h < b2.value.length(); ++h) {
+            c = c + (c2 << (convertNumToString(h))).singleMul(convertCharToInt(b3[b2.value.length() - h - 1]));
         }
-        if((this->over0&&b2.over0)||((!this->over0)&&(!b2.over0))){
+        if ((this->over0 && b2.over0) || ((!this->over0) && (!b2.over0))) {
             c.over0 = true;
-        }else{
+        }
+        else {
             c.over0 = false;
         }
         c.deploy = c.getDeploy();
         return c;
     }
-    BigInteger mul(const string b2){
+    BigInteger mul(const string b2) {
         return this->mul(BigInteger(b2));
     }
-    BigInteger mul(const long long int b2){
+    BigInteger mul(const long long int b2) {
         return this->mul(BigInteger(b2));
     }
-    BigInteger operator*(const BigInteger& b2){
+    BigInteger operator*(const BigInteger& b2) {
         return this->mul(b2);
     }
-    BigInteger operator*(const string b2){
+    BigInteger operator*(const string b2) {
         return this->mul(b2);
     }
-    BigInteger operator*(const long long int b2){
+    BigInteger operator*(const long long int b2) {
         return this->mul(b2);
     }
-    BigInteger& operator*=(const BigInteger& b2){
+    BigInteger& operator*=(const BigInteger& b2) {
         BigInteger x = this->mul(b2);
         this->over0 = x.over0;
         this->value = x.value;
@@ -650,7 +650,7 @@ public:
         this->effectiveLength = x.effectiveLength;
         return *this;
     }
-    BigInteger& operator*=(const string b2){
+    BigInteger& operator*=(const string b2) {
         BigInteger x = this->mul(b2);
         this->over0 = x.over0;
         this->value = x.value;
@@ -659,7 +659,7 @@ public:
         this->effectiveLength = x.effectiveLength;
         return *this;
     }
-    BigInteger& operator*=(const long long int b2){
+    BigInteger& operator*=(const long long int b2) {
         BigInteger x = this->mul(b2);
         this->over0 = x.over0;
         this->value = x.value;
@@ -668,12 +668,12 @@ public:
         this->effectiveLength = x.effectiveLength;
         return *this;
     }
-    BigInteger& toAbs(){
+    BigInteger& toAbs() {
         this->over0 = true;
         this->deploy = this->getDeploy();
         return *this;
     }
-    BigInteger abs(const BigInteger b){
+    BigInteger abs(const BigInteger b) {
         BigInteger x = b;
         x.over0 = true;
         x.deploy = getDeploy();
@@ -712,58 +712,63 @@ string getFibonasci(long long int x){
     }
 
 }*/
-string getFibo(long long int p){
-    if(p==0){
+string getFibo(long long int p) {
+    if (p == 0) {
         return "0";
-    }else if(p==1){
+    }
+    else if (p == 1) {
         return "1";
-    }else{
-        BigInteger x(0);
-        BigInteger y(1);
+    }
+    else {
+        BigInteger x(1);
+        BigInteger y(0);
         BigInteger z(1);
-        for(int h = 2;h<=p;h++){
+        for (int h = 2; h <= p; h++) {
             x = y;
             y = z;
-            z = x+y;
+            z = x + y;
         }
         return z.value;
     }
 }
 int main() {
-//        BigInteger x(100);
-//        BigInteger y(200);
-//        BigInteger z(-300);
-//        cout<<(x+y).over0<<" "<<(x+y).v<<" "<<(x+y).getValue()<<endl;
-//        cout<<(x+z).over0<<" "<<(x+z).v<<" "<<(x+z).getValue()<<endl;
-//        cout<<(x-y).over0<<" "<<(x-y).v<<" "<<(x-y).getValue()<<endl;
-//        cout<<(-y).over0<<" "<<(-y).v<<" "<<(-y).getValue()<<endl;
-//        cout<<(x-z).over0<<" "<<(x-z).v<<" "<<(x-z).getValue()<<endl;
-//        cout<<(-x-y).over0<<" "<<(-x-y).v<<" "<<(x-100000).getValue()<<endl;
-//        BigInteger io(string(10,'3'));
-//        BigInteger ip(string(10,'7'));
-//        cout<<(++io).getValue()<<endl;cout<<(io).getValue()<<endl;
-//        cout<<(io++).getValue()<<endl;cout<<(io).getValue()<<endl;
-//        cout<<(--io).getValue()<<endl;cout<<(io).getValue()<<endl;
-//        cout<<(io--).getValue()<<endl;cout<<(io).getValue()<<endl;
-/*    cout << (BigInteger(100) + "-100").getValue() << endl;
-        cout<<(BigInteger(123)<<1000000).getDetails();
-    vector<int> y(0);
-    y = vector<int>(2);*/
-    //    BigInteger x("0000");
-    //    x.getDetails();
-//    BigInteger p("33333");
-//    p >> 3;
-//    p.getDetails();
-//    p*=-100;
-//    (p.toAbs()).getDetails();
-//    p.getDetails();
-//    p *= -1;
-//    p.abs(p).getDetails();
-//    p.getDetails();
-//    for(int i = 0;i<3000;i++){
-////        cout<<getFibonasci(i)<<endl;
-//        cout<<getFibo(i)<<endl;
-//    }
-    cout<<getFibo(30000);
+    //        BigInteger x(100);
+    //        BigInteger y(200);
+    //        BigInteger z(-300);
+    //        cout<<(x+y).over0<<" "<<(x+y).v<<" "<<(x+y).getValue()<<endl;
+    //        cout<<(x+z).over0<<" "<<(x+z).v<<" "<<(x+z).getValue()<<endl;
+    //        cout<<(x-y).over0<<" "<<(x-y).v<<" "<<(x-y).getValue()<<endl;
+    //        cout<<(-y).over0<<" "<<(-y).v<<" "<<(-y).getValue()<<endl;
+    //        cout<<(x-z).over0<<" "<<(x-z).v<<" "<<(x-z).getValue()<<endl;
+    //        cout<<(-x-y).over0<<" "<<(-x-y).v<<" "<<(x-100000).getValue()<<endl;
+    //        BigInteger io(string(10,'3'));
+    //        BigInteger ip(string(10,'7'));
+    //        cout<<(++io).getValue()<<endl;cout<<(io).getValue()<<endl;
+    //        cout<<(io++).getValue()<<endl;cout<<(io).getValue()<<endl;
+    //        cout<<(--io).getValue()<<endl;cout<<(io).getValue()<<endl;
+    //        cout<<(io--).getValue()<<endl;cout<<(io).getValue()<<endl;
+    /*    cout << (BigInteger(100) + "-100").getValue() << endl;
+            cout<<(BigInteger(123)<<1000000).getDetails();
+        vector<int> y(0);
+        y = vector<int>(2);*/
+        //    BigInteger x("0000");
+        //    x.getDetails();
+    //    BigInteger p("33333");
+    //    p >> 3;
+    //    p.getDetails();
+    //    p*=-100;
+    //    (p.toAbs()).getDetails();
+    //    p.getDetails();
+    //    p *= -1;
+    //    p.abs(p).getDetails();
+    //    p.getDetails();
+    //    for(int i = 0;i<3000;i++){
+    ////        cout<<getFibonasci(i)<<endl;
+    //        cout<<getFibo(i)<<endl;
+    //    }
+    for (int i = 0; i < 10; i++) {
+        cout << getFibo(i) << endl;
+    }
+    cout << getFibo(30001);
     return 0;
 }
