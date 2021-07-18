@@ -7,6 +7,14 @@
 #include <cmath>
 using namespace std;
 using namespace std::string_literals;
+long long int convertStringToLong(string s){
+    long long int x = 0;
+    for(int i=0; i<s.length();i++){
+        x *= 10;
+        x += static_cast<int>(s[i]-48);
+    }
+    return x;
+}
 template <typename T>
 string convertNumToString(T x) {
     // transfer int number to string
@@ -544,6 +552,13 @@ public:
         this->totalLength = t.totalLength;
         return *this;
     }
+    BigInteger operator<<(string y) {
+        //这个并非是为冗余重载设计，而是用于提供一个不改变原对象（返回新对象）的方法
+        long long int x = convertStringToLong(y);
+        assert(x >= 0);
+        BigInteger t(this->over0 ? this->v + string(x, '0') : '-' + this->v + string(x, '0'));
+        return t;
+    }
     BigInteger& operator>>(const long long int x) {
         assert(x >= 0);
         if (x >= this->effectiveLength) {
@@ -562,6 +577,18 @@ public:
             return *this;
         }
     }
+    BigInteger operator>>(const string b) {
+        //这个并非是为冗余重载设计，而是用于提供一个不改变原对象（返回新对象）的方法
+        long long int x = convertStringToLong(b);
+        assert(x >= 0);
+        if (x >= this->effectiveLength) {
+            return BigInteger(0);
+        }
+        else {
+            BigInteger t(this->over0 ? string((this->v).begin(), (this->v).end() - x) : '-' + string((this->v).begin(), (this->v).end() - x));
+            return t;
+        }
+    }
     //    BigInteger operator<<(const BigInteger& x) {
     //        //自举左移重载，但实际用途不大
     //        assert(x.over0);
@@ -570,9 +597,138 @@ public:
     string getValue() {
         return over0 ? this->v : '-' + this->v;
     }
+    BigInteger singleMul(const unsigned int b){
+        string c;
+        string b1 = this->value;
+        size_t le = b1.length();
+        int push = 0;
+        int multi;
+        for(size_t h = 0;h<le;h++){
+            multi = convertCharToInt(b1[le-h-1]) * b+push;
+            c = convertIntToChar(multi%10)+c;
+            push = multi / 10 % 10;
+        }
+        c = convertIntToChar(push)+c;
+        return BigInteger(c);
+    }
+    BigInteger mul(const BigInteger& b2){
+        BigInteger c(0);
+        BigInteger c2(*this);
+        const string b3 = b2.value;
+        for(size_t h = 0;h<b2.value.length();++h){
+            c = c + (c2<<(convertNumToString(h))).singleMul(convertCharToInt(b3[b2.value.length()-h-1]));
+        }
+        if((this->over0&&b2.over0)||((!this->over0)&&(!b2.over0))){
+            c.over0 = true;
+        }else{
+            c.over0 = false;
+        }
+        c.deploy = c.getDeploy();
+        return c;
+    }
+    BigInteger mul(const string b2){
+        return this->mul(BigInteger(b2));
+    }
+    BigInteger mul(const long long int b2){
+        return this->mul(BigInteger(b2));
+    }
+    BigInteger operator*(const BigInteger& b2){
+        return this->mul(b2);
+    }
+    BigInteger operator*(const string b2){
+        return this->mul(b2);
+    }
+    BigInteger operator*(const long long int b2){
+        return this->mul(b2);
+    }
+    BigInteger& operator*=(const BigInteger& b2){
+        BigInteger x = this->mul(b2);
+        this->over0 = x.over0;
+        this->value = x.value;
+        this->deploy = x.deploy;
+        this->totalLength = x.totalLength;
+        this->effectiveLength = x.effectiveLength;
+        return *this;
+    }
+    BigInteger& operator*=(const string b2){
+        BigInteger x = this->mul(b2);
+        this->over0 = x.over0;
+        this->value = x.value;
+        this->deploy = x.deploy;
+        this->totalLength = x.totalLength;
+        this->effectiveLength = x.effectiveLength;
+        return *this;
+    }
+    BigInteger& operator*=(const long long int b2){
+        BigInteger x = this->mul(b2);
+        this->over0 = x.over0;
+        this->value = x.value;
+        this->deploy = x.deploy;
+        this->totalLength = x.totalLength;
+        this->effectiveLength = x.effectiveLength;
+        return *this;
+    }
+    BigInteger& toAbs(){
+        this->over0 = true;
+        this->deploy = this->getDeploy();
+        return *this;
+    }
+    BigInteger abs(const BigInteger b){
+        BigInteger x = b;
+        x.over0 = true;
+        x.deploy = getDeploy();
+        return x;
+    }
 
 
 };
+/*
+string getFibonasci(long long int x){
+ //这种构造思想是我所希望的，但是会出现错误
+ //而且，另一种处理策略效率也并不慢
+    if(x>20){
+        vector<long long int> y1(20);
+        vector<BigInteger> y2(x-20);
+        y1[0] = 0;
+        y1[1] = 1;
+        for(int h = 2;h <20;h++){
+            y1[h] = y1[h-2]+y1[h-1];
+        }
+        BigInteger t = BigInteger(y1[18]+y1[19]);
+        y2[0] = t;
+        y2[1] = t+y1[19];
+        for(int j = 2;j<x;j++){
+            y2[j] = y2[j-2]+y2[j-1];
+        }
+        return y2[x-21].value;
+    }else{
+        vector<long long int> y1(x);
+        y1[0] = 0;
+        y1[1] = 1;
+        for(int h = 2;h <x;h++){
+            y1[h] = y1[h-2]+y1[h-1];
+        }
+        return convertNumToString(y1[x-1]);
+    }
+
+}*/
+string getFibo(long long int p){
+    if(p==0){
+        return "0";
+    }else if(p==1){
+        return "1";
+    }else{
+        BigInteger x(0);
+        BigInteger y(1);
+        BigInteger z(1);
+        for(int h = 2;h<=p;h++){
+            x = y;
+            y = z;
+            z = x+y;
+        }
+        return z.value;
+    }
+}
 int main() {
 //        BigInteger x(100);
 //        BigInteger y(200);
@@ -595,8 +751,19 @@ int main() {
     y = vector<int>(2);*/
     //    BigInteger x("0000");
     //    x.getDetails();
-    BigInteger p("-902700129700");
-    p >> 3;
-    (p + 129).getDetails();
+//    BigInteger p("33333");
+//    p >> 3;
+//    p.getDetails();
+//    p*=-100;
+//    (p.toAbs()).getDetails();
+//    p.getDetails();
+//    p *= -1;
+//    p.abs(p).getDetails();
+//    p.getDetails();
+//    for(int i = 0;i<3000;i++){
+////        cout<<getFibonasci(i)<<endl;
+//        cout<<getFibo(i)<<endl;
+//    }
+    cout<<getFibo(30000);
     return 0;
 }
