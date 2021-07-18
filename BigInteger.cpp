@@ -10,6 +10,9 @@ using namespace std::string_literals;
 template <typename T>
 string convertNumToString(T x) {
     // transfer int number to string
+    if (x == 0) {
+        return "0";
+    }
     x = abs(x);
     string s;
     x *= 10;
@@ -34,6 +37,14 @@ bool convertStringToBool(string bo) {
         return true;
     }
 }
+string convertBoolToString(bool bo) {
+    if (bo) {
+        return "true";
+    }
+    else {
+        return "false";
+    }
+}
 size_t nonZero(string getStr) {
     string temp = string(getStr);
     for (size_t i = 0; i < temp.length(); ++i) {
@@ -52,10 +63,16 @@ string simplifyBigIntegerValue(string BigIntegerValue) {
     //将00001简化为1
     if (v[0] == '-' || v[0] == '+') {
         size_t bn0 = nonZero(string(v.begin() + 1, v.end()));
+        if (bn0 + 1 == v.length()) {
+            return "0";
+        }
         return '-' + string(v.begin() + bn0 + 1, v.end());
     }
     else {
         size_t bn0 = nonZero(v);
+        if (bn0 == v.length()) {
+            return "0";
+        }
         return string(v.begin() + bn0, v.end());
     }
 }
@@ -69,7 +86,7 @@ public:
     string& v = value;
     string deploy;
     explicit BigInteger(int initNum) {
-        if (initNum > 0) {
+        if (initNum >= 0) {
             over0 = true;
         }
         else {
@@ -80,36 +97,42 @@ public:
         this->effectiveLength = this->totalLength;
         this->deploy = this->getDeploy();
     }
-    BigInteger(const string initWithString, bool simplify) {
+    BigInteger(const string initWithString) {
         string initHelper = initWithString;
         size_t posFix = 0;
         if (initHelper[0] == '-') {
+            //-12344
+            //no -000989
             this->over0 = false;
             posFix = 1;
         }
         else if (initHelper[0] == '0') {
+            //08990
+            //0000798
+            //0000
             size_t nonZeroBit;
             nonZeroBit = nonZero(string(initHelper));
             this->over0 = true;
-            if (simplify) {
-                this->value = string(initHelper.begin() + nonZeroBit, initHelper.end());
-                this->totalLength = this->value.length();
-                this->effectiveLength = this->totalLength;
-                this->deploy = this->getDeploy();
+            if (nonZeroBit == initHelper.length()) {
+                this->value = "0";
             }
             else {
-                this->value = initHelper;
-                this->totalLength = initHelper.length();
-                this->effectiveLength = initHelper.length() - nonZeroBit - 1;
-                this->deploy = this->getDeploy();
+                this->value = string(initHelper.begin() + nonZeroBit, initHelper.end());
             }
+            this->totalLength = this->value.length();
+            this->effectiveLength = this->totalLength;
+            this->deploy = this->getDeploy();
+            return;
 
         }
         else if (initHelper[0] == '+') {
+            //+9009
+            //no +000789
             this->over0 = true;
             posFix = 1;
         }
         else {
+            //989080
             this->over0 = true;
         }
         this->value = string(initHelper.begin() + posFix, initHelper.end());
@@ -117,13 +140,21 @@ public:
         this->effectiveLength = this->totalLength;
         this->deploy = this->getDeploy();
     }
-    BigInteger(const string initWithDeploy) {
+    BigInteger(const string initWithDeploy, bool simplifyDeploy) {
         vector<string> x = getOrigin(string(initWithDeploy));
         this->over0 = convertStringToBool(string(x[0]));
         this->value = x[1];
         this->totalLength = this->value.length();
         this->effectiveLength = this->totalLength;
-        this->deploy = string(initWithDeploy);
+        if (simplifyDeploy) {
+            if (this->value == "0") {
+                this->over0 = true;
+            }
+            this->deploy = getDeploy();
+        }
+        else {
+            this->deploy = string(initWithDeploy);
+        }
     }
     BigInteger(const BigInteger& bi) {
         //拷贝构造函数，不应再函数前面添加explicit，即使它只有一个参数
@@ -192,6 +223,9 @@ public:
             p = length - iter;
             endBit = 9 - convertCharToInt(valueTemp[p]) + push;
             if (endBit == 10) {
+                if (iter == length) {
+                    //                    deploy =
+                }
                 deployTemp = '0' + deployTemp;
                 push = 1;
             }
@@ -209,18 +243,33 @@ public:
         size_t getBack = 1;
         if (deployed[0] == '0') {
             x[0] = "1";
-            x[1] = string(deployed.begin() + 1, deployed.end());
+            const string t = string(deployed.begin() + 1, deployed.end());
+            x[1] = simplifyBigIntegerValue(t);
         }
         else {
             assert(deployed[0] == '9');
+            //            cout<<"&&&!!!"<<deployed<<" "<<deployed[0]<<endl;
             x[0] = "0";//false
             string originTemp = getDeploy(string(deployed.begin() + 1, deployed.end()), false);
-            x[1] = string(originTemp.begin() + 1, originTemp.end());
+            const string t = string(originTemp.begin() + 1, originTemp.end());
+            x[1] = simplifyBigIntegerValue(t);
         }
         return x;
     }
+    void toString() {
+        //用于对齐
+        if (this->over0) {
+            printf("symbol:BigInteger\nover0: %s\nvalue:  %s \ndeploy: %s\ntotalLength: %d \neffectLength: %d\n", convertBoolToString(this->over0).c_str(), this->getValue().c_str(), this->deploy.c_str(), this->totalLength, this->effectiveLength);
+        }
+        else {
+            printf("symbol:BigInteger\nover0: %s\nvalue: %s \ndeploy: %s\ntotalLength: %d \neffectLength: %d\n", convertBoolToString(this->over0).c_str(), this->getValue().c_str(), this->deploy.c_str(), this->totalLength, this->effectiveLength);
+        }
+    }
+    void getDetails() {
+        this->toString();
+    }
     BigInteger add(const BigInteger& b2) {
-        const BigInteger b1(this->deploy);
+        const BigInteger b1(this->deploy, true);
         size_t l1 = b1.effectiveLength;
         size_t l2 = b2.effectiveLength;
         string effects1, effects2;
@@ -268,51 +317,87 @@ public:
             deployed = '0' + deployed;
         }
         vector<string> x = getOrigin(deployed);
-        return BigInteger(simplifyBigIntegerValue(convertStringToBool(string(x[0])) ? x[1] : '-' + x[1]), convertStringToBool(x[0]));
-        //ignore push
+        return BigInteger(simplifyBigIntegerValue(convertStringToBool(string(x[0])) ? x[1] : '-' + x[1]));
     }
-    BigInteger add(long long int b2){
+    BigInteger add(string b2) {
+        BigInteger b1 = BigInteger(this->deploy);
+        BigInteger bx = BigInteger(b2, true);
+        return b1.add(bx);
+    }
+    BigInteger add(long long int b2) {
         BigInteger b1 = BigInteger(this->deploy);
         BigInteger bx = BigInteger(b2);
-        return this->add(bx);
-    }
-    BigInteger sub(const BigInteger& b2){
-        return this->add(-b2);
-    }
-    BigInteger sub(const string b2){
-        return this->add(-BigInteger(b2,true));
-    }
-    BigInteger sub(long long int b2){
-        return this->add(-BigInteger(b2));
-    }
-    char operator[](int index) const {
-        return this->v[index];
+        return b1.add(bx);
     }
     BigInteger operator+() const {
         return *this;
     }
     BigInteger operator-() const {
-        return BigInteger(this->over0 ?  '-' + this->v :this->v, true);
+        return BigInteger(this->over0 ? '-' + this->v : this->v);
+    }
+    BigInteger& operator = (const BigInteger& b2) {
+        this->over0 = b2.over0;
+        this->deploy = b2.deploy;
+        this->value = b2.value;
+        this->totalLength = b2.totalLength;
+        this->effectiveLength = b2.effectiveLength;
+        return *this;
+    }
+    BigInteger sub(const BigInteger& b2) {
+        return this->add(-b2);
+    }
+    BigInteger sub(const string b2) {
+        return this->add(-BigInteger(b2));
+    }
+    BigInteger sub(long long int b2) {
+        return this->add(-BigInteger(b2));
     }
     BigInteger operator+(const BigInteger& b2) {
         return this->add(b2);
     }
-    BigInteger operator-(const BigInteger& b2) {
-        return this->sub(b2);
-    }
     BigInteger operator+(const string b2) {
-        return this->add(BigInteger(b2,true));
-    }
-    BigInteger operator-(const string b2) {
-        this->sub(b2);
+        return this->add(BigInteger(b2));
     }
     BigInteger operator+(const long long int b2) {
         return this->add(BigInteger(b2));
     }
+    //pre
+    BigInteger& operator++() {
+        (*this) += 1;
+        return *this;
+    }
+    //post
+    BigInteger operator++(int dummy) {
+        BigInteger x = BigInteger(*this);
+        (*this) += 1;
+        return x;
+    }
+    //pre
+    BigInteger& operator--() {
+        (*this) -= 1;
+        return *this;
+    }
+    //post
+    BigInteger operator--(int dummy) {
+        BigInteger x = BigInteger(*this);
+        (*this) -= 1;
+        return x;
+    }
+    BigInteger operator-(const BigInteger& b2) {
+        return this->sub(b2);
+    }
+    BigInteger operator-(const string b2) {
+        return this->sub(b2);
+    }
     BigInteger operator-(const long long int b2) {
         return this->sub(b2);
     }
-    BigInteger operator+=(const BigInteger& b2){
+    char operator[](int index) const {
+        return this->v[index];
+    }
+
+
+    BigInteger& operator+=(const BigInteger& b2) {
         BigInteger t = this->add(b2);
         this->value = t.value;
         this->over0 = t.over0;
@@ -321,7 +406,7 @@ public:
         this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    BigInteger operator+=(const long long int b2){
+    BigInteger& operator+=(const string b2) {
         BigInteger t = this->add(b2);
         this->value = t.value;
         this->over0 = t.over0;
@@ -330,18 +415,16 @@ public:
         this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    //pre
-    BigInteger operator++(){
-        (*this)+=1;
+    BigInteger& operator+=(const long long int b2) {
+        BigInteger t = this->add(b2);
+        this->value = t.value;
+        this->over0 = t.over0;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    //post
-    BigInteger operator++(int dummy){
-        BigInteger x = BigInteger(*this);
-        (*this)+=1;
-        return x;
-    }
-    BigInteger operator-=(const BigInteger& b2){
+    BigInteger& operator-=(const BigInteger& b2) {
         BigInteger t = this->sub(b2);
         this->value = t.value;
         this->over0 = t.over0;
@@ -350,7 +433,7 @@ public:
         this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    BigInteger operator-=(const  long long int b2){
+    BigInteger& operator-=(const string b2) {
         BigInteger t = this->sub(b2);
         this->value = t.value;
         this->over0 = t.over0;
@@ -359,58 +442,161 @@ public:
         this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    //pre
-    BigInteger operator--(){
-        (*this)-=1;
+    BigInteger& operator-=(const long long int b2) {
+        BigInteger t = this->sub(b2);
+        this->value = t.value;
+        this->over0 = t.over0;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
         return *this;
     }
-    //post
-    BigInteger operator--(int dummy){
-        BigInteger x = BigInteger(*this);
-        (*this)-=1;
-        return x;
+
+    int compareTo(const BigInteger& b2) {
+        //注意要比较的是有效值长度
+        int y = 2;
+        if (this->over0 && (!b2.over0)) {
+            return 1;
+        }
+        if ((!this->over0) && b2.over0) {
+            return -1;
+        }
+        if (this->v.length() > b2.v.length()) {
+            y = 2;
+        }
+        else if (this->v.length() < b2.v.length()) {
+            y = 1;
+        }
+        else {
+            for (unsigned int c = 0; c < this->v.length(); c++) {
+                if (this->v[c] > b2.v[c]) {
+                    y = 3;
+                    break;
+                }
+                else if (this->v[c] < b2.v[c]) {
+                    y = 1;
+                    break;
+                }
+                else {
+                    continue;
+                }
+            }
+        }
+        if (y == 2) {
+            return 0;
+        }
+        if (this->over0) {
+            if (y == 3) {
+                return 1;
+            }
+            else {
+                return -1;
+            }
+        }
+        else {
+            if (y == 3) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        }
+    }
+    int compareTo(const string b2) {
+        const BigInteger t(b2);
+        return this->compareTo(t);
+    }
+    int compareTo(const long long int b2) {
+        const BigInteger t(b2);
+        return this->compareTo(t);
     }
     //-- ++ equals()
-    BigInteger operator<<(const unsigned int x){
-        return BigInteger(this->over0?this->v+string(x,'0'):'-'+this->v+string(x,'0'),false);
+    bool equals(const BigInteger& b2) {
+        if (this->compareTo(b2) == 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    BigInteger operator<<(const unsigned long int x){
-        return BigInteger(this->over0?this->v+string(x,'0'):'-'+this->v+string(x,'0'),false);
+    bool equals(const string b2) {
+        if (this->compareTo(b2) == 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    BigInteger operator<<(const unsigned long long int x){
-        return BigInteger(this->over0?this->v+string(x,'0'):'-'+this->v+string(x,'0'),false);
+    bool equals(const long long int b2) {
+        if (this->compareTo(b2) == 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    BigInteger operator<<(const BigInteger& x){
-
+    BigInteger& operator<<(const long long int x) {
+        assert(x >= 0);
+        BigInteger t(this->over0 ? this->v + string(x, '0') : '-' + this->v + string(x, '0'));
+        this->value = t.v;
+        this->deploy = t.deploy;
+        this->effectiveLength = t.effectiveLength;
+        this->totalLength = t.totalLength;
+        return *this;
     }
-    string getValue(){
-        return over0?this->v:'-'+this->v;
+    BigInteger& operator>>(const long long int x) {
+        assert(x >= 0);
+        if (x >= this->effectiveLength) {
+            this->value = "0";
+            this->deploy = "00";
+            this->effectiveLength = 1;
+            this->totalLength = 1;
+            return *this;
+        }
+        else {
+            BigInteger t(this->over0 ? string((this->v).begin(), (this->v).end() - x) : '-' + string((this->v).begin(), (this->v).end() - x));
+            this->value = t.v;
+            this->deploy = t.deploy;
+            this->effectiveLength = t.effectiveLength;
+            this->totalLength = t.totalLength;
+            return *this;
+        }
+    }
+    //    BigInteger operator<<(const BigInteger& x) {
+    //        //自举左移重载，但实际用途不大
+    //        assert(x.over0);
+    //       较好的实现这个函数并不简单，况且考虑到处理器的性能与思维方式广阔度决定暂时不实现该方法
+    //    }
+    string getValue() {
+        return over0 ? this->v : '-' + this->v;
     }
 
 
 };
 int main() {
-    //    BigInteger x(100);
-    //    cout<<x.v<<" "<<x.value<<" "<<x.totalLength<<" "<<x.effectiveLength<<endl;
-    //    cout<<x.getDeploy()<<endl;
-    //    BigInteger y(-100);
-    //    cout<<y.deploy<<" "<<y.over0<<endl;
-    //    vector<string> h = y.getOrigin("912189");
-    //    cout<<h[0]<<" "<<h[1]<<endl;
-    BigInteger x(100);
-    BigInteger y(200);
-    BigInteger z(-300);
-    cout<<(x+y).over0<<" "<<(x+y).v<<" "<<(x+y).getValue()<<endl;
-    cout<<(x+z).over0<<" "<<(x+z).v<<" "<<(x+z).getValue()<<endl;
-    cout<<(x-y).over0<<" "<<(x-y).v<<" "<<(x-y).getValue()<<endl;
-    cout<<(-y).over0<<" "<<(-y).v<<" "<<(-y).getValue()<<endl;
-    cout<<(x-z).over0<<" "<<(x-z).v<<" "<<(x-z).getValue()<<endl;
-    cout<<(-x-y).over0<<" "<<(-x-y).v<<" "<<(x-100000).getValue()<<endl;
-    BigInteger io(string(10,'3'),true);
-    BigInteger ip(string(10,'7'),true);
-    cout<<(++io).getValue()<<endl;cout<<(io).getValue()<<endl;
-    cout<<(io++).getValue()<<endl;cout<<(io).getValue()<<endl;
-    cout<<(--io).getValue()<<endl;cout<<(io).getValue()<<endl;
-    cout<<(io--).getValue()<<endl;cout<<(io).getValue()<<endl;
+//        BigInteger x(100);
+//        BigInteger y(200);
+//        BigInteger z(-300);
+//        cout<<(x+y).over0<<" "<<(x+y).v<<" "<<(x+y).getValue()<<endl;
+//        cout<<(x+z).over0<<" "<<(x+z).v<<" "<<(x+z).getValue()<<endl;
+//        cout<<(x-y).over0<<" "<<(x-y).v<<" "<<(x-y).getValue()<<endl;
+//        cout<<(-y).over0<<" "<<(-y).v<<" "<<(-y).getValue()<<endl;
+//        cout<<(x-z).over0<<" "<<(x-z).v<<" "<<(x-z).getValue()<<endl;
+//        cout<<(-x-y).over0<<" "<<(-x-y).v<<" "<<(x-100000).getValue()<<endl;
+//        BigInteger io(string(10,'3'));
+//        BigInteger ip(string(10,'7'));
+//        cout<<(++io).getValue()<<endl;cout<<(io).getValue()<<endl;
+//        cout<<(io++).getValue()<<endl;cout<<(io).getValue()<<endl;
+//        cout<<(--io).getValue()<<endl;cout<<(io).getValue()<<endl;
+//        cout<<(io--).getValue()<<endl;cout<<(io).getValue()<<endl;
+/*    cout << (BigInteger(100) + "-100").getValue() << endl;
+        cout<<(BigInteger(123)<<1000000).getDetails();
+    vector<int> y(0);
+    y = vector<int>(2);*/
+    //    BigInteger x("0000");
+    //    x.getDetails();
+    BigInteger p("-902700129700");
+    p >> 3;
+    (p + 129).getDetails();
     return 0;
 }

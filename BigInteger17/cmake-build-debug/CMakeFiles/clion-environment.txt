@@ -1,4 +1,0 @@
-ToolSet: 5.0 (local)@D:\ProgramData\MingW
-Options: 
-
-Options:

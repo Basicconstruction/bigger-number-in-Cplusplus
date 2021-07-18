@@ -1,3 +1,0 @@
-C:/Users/hay boy/CLionProjects/BigInteger17/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/hay boy/CLionProjects/BigInteger17/cmake-build-debug/CMakeFiles/BigInteger17.dir
-C:/Users/hay boy/CLionProjects/BigInteger17/cmake-build-debug/CMakeFiles/edit_cache.dir
