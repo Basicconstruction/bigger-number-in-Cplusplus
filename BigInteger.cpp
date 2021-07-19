@@ -984,7 +984,7 @@ int main() {
         //    x %=19;
         //    x.getDetails();
     //    BigInteger y(BigInteger(144567)*"144567");
-    BigInteger z(BigInteger(1234567) * 7654321);
+    BigInteger z("30811308148245719945");
     (z.sqrt()).getDetails();
     //    (BigInteger (1259)/2).getDetails();
     return 0;
