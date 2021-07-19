@@ -989,3 +989,13 @@ int main() {
     //    (BigInteger (1259)/2).getDetails();
     return 0;
 }
+//下一步的改正策略
+/*
+取消对value值的引用，以便于更精确的对函数进行签名
+显现bug排除
+创建精简 BigInteger 与 unsigned BigInteger 以便于进一步提升性能，减少内存消耗，
+删除 totalLength,对每一个BigInteger 在创建时自动简化，并且在运算时也进行简化，减少内存消耗，提升性能
+用减法来实现减法，用于提升性能，取消对deploy的依赖，减小内存消耗，提升性能
+当数据小于long long int max时，依赖于原生的计算库，实现有尽可能提升性能，不做无用功。
+提高数据精度的表示
+*/
