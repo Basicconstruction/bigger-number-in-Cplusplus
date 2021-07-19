@@ -7,11 +7,30 @@
 #include <cmath>
 using namespace std;
 using namespace std::string_literals;
+bool same(const bool a, const bool b) {
+    if (a && b) {
+        return true;
+    }
+    else if ((!a) && (!b)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+size_t convertCharToInt(const char c) {
+    assert(c >= 48 && c <= 57);
+    //cout << c << " push " << endl;
+    return static_cast<size_t>(c) - 48;
+}
+char convertIntToChar(size_t c) {
+    return static_cast<char>(c + 48);
+}
 long long int convertStringToLong(string s) {
     long long int x = 0;
-    for (int i = 0; i < s.length(); i++) {
+    for (size_t i = 0; i < s.length(); i++) {
         x *= 10;
-        x += static_cast<int>(s[i] - 48);
+        x += convertCharToInt(s[i]);
     }
     return x;
 }
@@ -28,13 +47,6 @@ string convertNumToString(T x) {
         s = static_cast<char>(x % 10 + 48) + s;
     }
     return s;
-}
-size_t convertCharToInt(const char c) {
-    assert(c >= 48 && c <= 57);
-    return static_cast<size_t>(c) - 48;
-}
-char convertIntToChar(int c) {
-    return static_cast<char>(c + 48);
 }
 bool convertStringToBool(string bo) {
     if (bo == "0") {
@@ -97,6 +109,7 @@ public:
             over0 = true;
         }
         else {
+            initNum = -initNum;
             over0 = false;
         }
         this->value = convertNumToString(initNum);
@@ -107,6 +120,14 @@ public:
     BigInteger(const string initWithString) {
         string initHelper = initWithString;
         size_t posFix = 0;
+        if (initWithString == "-0") {
+            this->value = "0";
+            this->over0 = true;
+            this->deploy = this->getDeploy();
+            this->totalLength = 1;
+            this->effectiveLength = 1;
+            return;
+        }
         if (initHelper[0] == '-') {
             //-12344
             //no -000989
@@ -174,7 +195,7 @@ public:
     }
     ~BigInteger() {}
     string getDeploy() {
-        if (over0) {
+        if (this->over0) {
             if (this->effectiveLength < this->totalLength) {
                 return this->v;
             }
@@ -399,7 +420,8 @@ public:
     BigInteger operator-(const long long int b2) {
         return this->sub(b2);
     }
-    char operator[](int index) const {
+    char operator[](size_t index) const {
+        assert(index + 1 <= this->v.length());
         return this->v[index];
     }
 
@@ -469,7 +491,7 @@ public:
             return -1;
         }
         if (this->v.length() > b2.v.length()) {
-            y = 2;
+            y = 3;
         }
         else if (this->v.length() < b2.v.length()) {
             y = 1;
@@ -541,6 +563,24 @@ public:
         else {
             return false;
         }
+    }
+    bool operator < (const BigInteger& b) {
+        return this->compareTo(b) < 0;
+    }
+    bool operator > (const BigInteger& b) {
+        return this->compareTo(b) > 0;
+    }
+    bool operator <= (const BigInteger& b) {
+        return this->compareTo(b) <= 0;
+    }
+    bool operator >= (const BigInteger& b) {
+        return this->compareTo(b) >= 0;
+    }
+    bool operator == (const BigInteger& b) {
+        return this->equals(b);
+    }
+    bool operator != (const BigInteger& b) {
+        return !this->equals(b);
     }
     BigInteger& operator<<(const long long int x) {
         assert(x >= 0);
@@ -674,44 +714,205 @@ public:
         return *this;
     }
     BigInteger abs(const BigInteger b) {
-        BigInteger x = b;
-        x.over0 = true;
-        x.deploy = getDeploy();
+        BigInteger x(b.v);
         return x;
     }
+    size_t divHelp(BigInteger& b1, BigInteger& b2) {
+        size_t get = 1;
+        for (size_t k = 2; k <= 9; ++k) {
+            if (b1 == (b2 * k)) {
+                return k;
+            }
+            else if (b1 < (b2 * k)) {
+                return --k;
+            }
+            else {
 
-
-};
-/*
-string getFibonasci(long long int x){
- //这种构造思想是我所希望的，但是会出现错误
- //而且，另一种处理策略效率也并不慢
-    if(x>20){
-        vector<long long int> y1(20);
-        vector<BigInteger> y2(x-20);
-        y1[0] = 0;
-        y1[1] = 1;
-        for(int h = 2;h <20;h++){
-            y1[h] = y1[h-2]+y1[h-1];
+            }
         }
-        BigInteger t = BigInteger(y1[18]+y1[19]);
-        y2[0] = t;
-        y2[1] = t+y1[19];
-        for(int j = 2;j<x;j++){
-            y2[j] = y2[j-2]+y2[j-1];
+        return 9;
+    }
+    BigInteger div(BigInteger b2) {
+        if (b2.v == "1") {
+            return *this;
         }
-        return y2[x-21].value;
-    }else{
-        vector<long long int> y1(x);
-        y1[0] = 0;
-        y1[1] = 1;
-        for(int h = 2;h <x;h++){
-            y1[h] = y1[h-2]+y1[h-1];
+        BigInteger b = this->abs(b2);
+        if (this->abs(*this) < b) {
+            return BigInteger(0);
         }
-        return convertNumToString(y1[x-1]);
+        BigInteger dh = this->abs(*this);
+        size_t l1 = this->value.length();
+        size_t l2 = b.value.length();
+        //1000
+        //div 35
+        size_t p;
+        string get;
+        for (size_t j = 0; j < l1;) {
+            if (BigInteger(string(dh.v.begin(), dh.v.begin() + 1 + j)) < b) {
+                j++;
+            }
+            else {
+                p = j;
+                break;
+            }
+        }
+        BigInteger* t = new BigInteger(string(dh.v.begin(), dh.v.begin() + 1 + p));
+        size_t newp = p;
+        size_t cal;
+        while (true) {
+            if (*t < b) {
+                get = get + '0';
+            }
+            else {
+                cal = divHelp(*t, b);
+                get = get + convertIntToChar(cal);
+            }
+            dh -= ((b * cal) << (l1 - 1 - newp));
+            if (get.length() == l1 - p) {
+                break;
+            }
+            newp++;
+            *t = ((*t - (b * cal)) << 1) + convertCharToInt((*this)[newp]);
+            cal = 0;
+        }
+        assert(get.length() == l1 - p);//默认查错
+        get = same(this->over0, b2.over0) ? get : '-' + get;
+        return BigInteger(get);
+    }
+    BigInteger operator %(BigInteger b2) {
+        BigInteger b = this->abs(b2);
+        if (this->abs(*this) < b) {
+            return BigInteger(0);
+        }
+        BigInteger dh = this->abs(*this);
+        size_t l1 = this->value.length();
+        size_t l2 = b.value.length();
+        //1000
+        //div 35
+        size_t p;
+        string get;
+        for (size_t j = 0; j < l1;) {
+            if (BigInteger(string(dh.v.begin(), dh.v.begin() + 1 + j)) < b) {
+                j++;
+            }
+            else {
+                p = j;
+                break;
+            }
+        }
+        BigInteger* t = new BigInteger(string(dh.v.begin(), dh.v.begin() + 1 + p));
+        size_t newp = p;
+        size_t cal;
+        while (true) {
+            if (*t < b) {
+                get = get + '0';
+            }
+            else {
+                cal = divHelp(*t, b);
+                get = get + convertIntToChar(cal);
+            }
+            dh -= ((b * cal) << (l1 - newp - 1));
+            if (get.length() == l1 - p) {
+                break;
+            }
+            newp++;
+            *t = ((*t - (b * cal)) << 1) + convertCharToInt((*this)[newp]);
+            cal = 0;
+        }
+        assert(get.length() == l1 - p);//默认查错
+        return (*this).over0 ? dh : -dh;
+    }
+    BigInteger operator % (const string b2) {
+        return *this % BigInteger(b2);
+    }
+    BigInteger operator % (const long long int b2) {
+        return *this % BigInteger(b2);
+    }
+    BigInteger& operator %=(BigInteger b2) {
+        BigInteger t = (*this) % b2;
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return (*this);
+    }
+    BigInteger& operator %=(const string b2) {
+        BigInteger t = (*this) % b2;
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return (*this);
+    }
+    BigInteger& operator %=(const long long int b2) {
+        BigInteger t = (*this) % b2;
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return (*this);
+    }
+    BigInteger div(const string b2) {
+        BigInteger cc(b2);
+        return this->div(cc);
+    }
+    BigInteger div(const long long int b2) {
+        BigInteger cc(b2);
+        return this->div(cc);
+    }
+    BigInteger operator / (BigInteger b2) {
+        return this->div(b2);
+    }
+    BigInteger operator / (const string b2) {
+        BigInteger b(b2);
+        return this->div(b);
+    }
+    BigInteger operator / (const long long int b2) {
+        BigInteger b(b2);
+        return this->div(b);
+    }
+    BigInteger& operator /= (BigInteger b) {
+        BigInteger t = this->div(b);
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return *this;
+    }
+    BigInteger& operator /= (const string b) {
+        BigInteger t = this->div(b);
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return *this;
+    }
+    BigInteger& operator /= (const long long int b) {
+        BigInteger t = this->div(b);
+        this->over0 = t.over0;
+        this->value = t.value;
+        this->deploy = t.deploy;
+        this->totalLength = t.totalLength;
+        this->effectiveLength = t.effectiveLength;
+        return *this;
+    }
+    BigInteger sqrt() {
+        BigInteger res(1);
+        bool t = true;;
+        while (t) {
+            res =(res + (*this) / res)/ 2;
+            t = (res * res <= (*this) && (res + 1) * (res + 1) > (*this)) || (res * res >= (*this) && (res - 1) * (res - 1) < (*this));
+            t = !t;
+        }
+        return (res * res <= (*this) && (res + 1) * (res + 1) > (*this)) ? res : res - 1;
     }
 
-}*/
+};
 string getFibo(long long int p) {
     if (p == 0) {
         return "0";
@@ -753,22 +954,38 @@ int main() {
         y = vector<int>(2);*/
         //    BigInteger x("0000");
         //    x.getDetails();
-    //    BigInteger p("33333");
-    //    p >> 3;
-    //    p.getDetails();
-    //    p*=-100;
-    //    (p.toAbs()).getDetails();
-    //    p.getDetails();
-    //    p *= -1;
-    //    p.abs(p).getDetails();
-    //    p.getDetails();
-    //    for(int i = 0;i<3000;i++){
-    ////        cout<<getFibonasci(i)<<endl;
-    //        cout<<getFibo(i)<<endl;
-    //    }
-    for (int i = 0; i < 10; i++) {
-        cout << getFibo(i) << endl;
-    }
-    cout << getFibo(30001);
+        //    BigInteger p("33333");
+        //    p >> 3;
+        //    p.getDetails();
+        //    p*=-100;
+        //    (p.toAbs()).getDetails();
+        //    p.getDetails();
+        //    p *= -1;
+        //    p.abs(p).getDetails();
+        //    p.getDetails();
+        //    for(int i = 0;i<3000;i++){
+        ////        cout<<getFibonasci(i)<<endl;
+        //        cout<<getFibo(i)<<endl;
+        //    }
+        //    for (int i = 0; i < 10; i++) {
+        //        cout << getFibo(i) << endl;
+        //    }
+        //    cout << getFibo(30001);
+        //    cout<<BigInteger(100).equals(BigInteger(33)*2);
+        //    BigInteger x(100);
+        //    x = - ((BigInteger(33)*0)<<1);
+        //    x.getDetails();
+        //    ((BigInteger(33)*0)<<1).getDetails();
+        //    (BigInteger(33)*0).getDetails();
+        //    BigInteger x(-1000);
+        ////    x = x / 13;
+        ////    x.getDetails();
+        //    x = BigInteger(-1000);
+        //    x %=19;
+        //    x.getDetails();
+    //    BigInteger y(BigInteger(144567)*"144567");
+    BigInteger z(BigInteger(1234567) * 7654321);
+    (z.sqrt()).getDetails();
+    //    (BigInteger (1259)/2).getDetails();
     return 0;
 }
