@@ -396,20 +396,7 @@ public:
         this->effectiveLength = x.effectiveLength;
         return *this;
     }
-    static size_t divHelp(BigInteger& b1, BigInteger& b2) {
-        for (size_t k = 2; k <= 9; ++k) {
-            if (b1 == (b2 * k)) {
-                return k;
-            }
-            else if (b1 < (b2 * k)) {
-                return --k;
-            }
-            else {
-
-            }
-        }
-        return 9;
-    }
+    
 
 };
 string getFibo(long long int p) {
@@ -443,7 +430,7 @@ string getJc(long int x){
     return res.value;
 }
 int main() {
-    cout<<getFibo(30000);
-    //getJc(1000);
+    cout<<getFibo(30001);
+//    getJc(1000);
     return 0;
 }
